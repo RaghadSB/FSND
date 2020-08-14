@@ -72,9 +72,14 @@ This README is missing documentation of your endpoints. Below is an example for 
 
 Endpoints
 GET '/categories'
-GET ...
-POST ...
-DELETE ...
+GET '/questions'
+GET '/categories/category_id/questions'
+POST '/searshquestion' 
+POST '/postquestion'
+POST '/quizzes'
+DELETE '/questions/question_id'
+
+
 
 GET '/categories'
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
@@ -88,7 +93,88 @@ GET '/categories'
 '6' : "Sports"}
 
 ```
+GET '/questions'
+- Get all the questions from all categories and display 10 questions in each page 
+- Request Arguments: None
+- Returns: a question list that contains all the questions as an object in form of object.id.
+"questions": [
+    {
+      "answer": "Muhammad Ali",
+      "category": "4",
+      "difficulty": 1,
+      "id": 2,
+      "question": "What boxer original name is Cassius Clay?"
+    }]
+ totalQuestions return the number of all the questions from all categories.
+ categories return the categories, which contains an object of id: category_string key: value pairs. 
+ currentCategory: return the current category, default is none or one.
 
+```
+ DELETE '/questions/question_id'
+ -Delete the question based on the given id 
+ -Request Arguments: Question id 
+ -Returns: JSON object to indicate the success of deletion
+ 
+
+ POST '/postquestion'
+ Add a question to the database from the user 
+-Request Arguments: JSON object that contains the question, answer and both are strings, an integer to indicates the difficulty of the question, and the id of the category
+-Returns: JSON that returns all the questions with the new question, and status that indicates the success of the post request
+ {
+      "answer": "the test",
+      "category": "5",
+      "difficulty": 3,
+      "id": 19,
+      "question": "new ques"
+    }
+  ],
+  "success": true
+
+
+POST '/searshquestion' 
+search in all the questions to find a match question with the givin string 
+-Request Arguments: JSON that contain the search term
+-Returns: JSON object that contain the questions taht matches the search string, and totalQuestions give the nuber of questions taht were found,currentCategory return the current category the user in
+
+
+GET '/categories/category_id/questions'
+Display questions based on the given category
+-Request Arguments: an integer that represents the id of the category
+-Returns: JSON that contains questions list with 10 questions for each page, totalquestions is the number of questions in this category, currentcategory return the id of the current category
+
+POST '/quizzes'
+ To start playing a quiz by choosing a category or all the categories  and it will return a random question from a given category
+ -Request Arguments:previous_questions list that has all the previous question to prevent repeating the question,quiz_category the id of the selected category to give question-based on the category
+ -Returns: JSON that contains currentquestion is a single random question on the format of 
+ "currentQuestion": {
+    "answer": "tset",
+    "category": "3",
+    "difficulty": 4,
+    "id": 10,
+    "question": "test"
+  }
+ , previousQuestions return the previous question after adding the new one in the list 
+  "previousQuestions": [
+    59,
+    9,
+    57,
+    11,
+    54,
+    13,
+    10
+  ]
+
+Error Handling 
+-The errors weil be return as JSON in this Format 
+{  "success": False, 
+   "error": 404,
+   "message": "The server can not find the requested page."
+}
+4 types of errors will be handeld 
+ -404 :Not Found
+ -422 :Unprocessable
+ -403 :Forbidden
+ -405 :Method Not Allowed
 
 ## Testing
 To run the tests, run
