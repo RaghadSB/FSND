@@ -3,6 +3,7 @@ from flask import Flask, request, abort, jsonify,render_template,redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS ,cross_origin
 import random
+import json
 
 from models import setup_db, Question, Category
 
@@ -11,21 +12,26 @@ QUESTIONS_PER_PAGE = 10
 def create_app(test_config=None):
   # create and configure the app
   app = Flask(__name__)
+  
+  app.config['CORS_HEADERS'] = 'Content-Type'
+
   setup_db(app)
   
   '''
   @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
   '''
-  cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+  cors = CORS(app, resources={r"/api/*": {"origins":"*"}},supports_credentials=True, )
 
   '''
   @TODO: Use the after_request decorator to set Access-Control-Allow
   '''
+ #http://localhost:3000
   @app.after_request
   def after_request(response):
-    
        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+       response.headers.add('Access-Control-Allow-Credentials', 'true')
        response.headers.add('Access-Control-Allow-Methods', 'GET,PATCH,POST,DELETE,OPTIONS')
+      #  response.headers.add('Access-Control-Allow-Origin','*')
        return response   
   '''
  @TODO: 
@@ -96,13 +102,15 @@ def create_app(test_config=None):
   
   '''
   @app.route('/postquestion',methods=['POST','GET'])
-  @cross_origin()
+  @cross_origin(headers=['Content-Type']) # Send Access-Control-Allow-Headers
   def addquestion():
+    print(request.get_json())
     question=request.get_json()['question']
     answer=request.get_json()['answer']
     difficulty=request.get_json()['difficulty']
     category=request.get_json()['category']
-    
+    # else:
+    #   abort(422)
     try:
       newquestion= Question(question =question ,answer =answer,category =category ,difficulty =difficulty )
       newquestion.insert()
