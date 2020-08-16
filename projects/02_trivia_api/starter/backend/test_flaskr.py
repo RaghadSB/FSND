@@ -20,7 +20,10 @@ class TriviaTestCase(unittest.TestCase):
         self.newquestion={"question":"new Q","answer":"nothing","difficulty":2,"category":5}
         self.searchTerm1={"searchTerm":"cat"}
         self.searchTerm2={"searchTerm":"ok"}
-        self.preque_qucate={"previous_questions":[59,58,57,56,54,53],"quiz_category":"5"}
+        self.preque_qucate={"previous_questions":[59,58,57,56,54,53],"quiz_category":{
+		"type": "Geography",
+		"id": 0
+	}}
         # binds the app to the current context
         with self.app.app_context():
             self.db = SQLAlchemy()
@@ -56,10 +59,12 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'],False)
         self.assertEqual(data['message'],'The server can not find the requested page.')
     def test_delete_question(self):
-        res=self.client().delete('/questions/8')
+        res=self.client().delete('/questions/80')
         data=json.loads(res.data) 
+        resl=Question.query.filter(Question.id==80).first()
         self.assertEqual(res.status_code,200)
         self.assertEqual(data['success'],True) 
+        self.assertEqual(resl,None)
     def test_delete_question_notexist(self):
         res=self.client().delete('/questions/1000')
         data=json.loads(res.data) 
@@ -97,7 +102,7 @@ class TriviaTestCase(unittest.TestCase):
         data=json.loads(res.data)
         self.assertEqual(res.status_code,200) 
         self.assertTrue(data['previousQuestions'])  
-        self.assertTrue(data['currentQuestion'])  
+        self.assertTrue(data['question'])  
 
 # Make the tests conveniently executable
 if __name__ == "__main__":

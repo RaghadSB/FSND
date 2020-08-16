@@ -20,18 +20,16 @@ def create_app(test_config=None):
   '''
   @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
   '''
-  cors = CORS(app, resources={r"/api/*": {"origins":"*"}},supports_credentials=True, )
+  cors = CORS(app, resources={r"/api/*": {"origins":"*"}} )
 
   '''
   @TODO: Use the after_request decorator to set Access-Control-Allow
   '''
- #http://localhost:3000
   @app.after_request
   def after_request(response):
        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
        response.headers.add('Access-Control-Allow-Credentials', 'true')
        response.headers.add('Access-Control-Allow-Methods', 'GET,PATCH,POST,DELETE,OPTIONS')
-      #  response.headers.add('Access-Control-Allow-Origin','*')
        return response   
   '''
  @TODO: 
@@ -102,15 +100,13 @@ def create_app(test_config=None):
   
   '''
   @app.route('/postquestion',methods=['POST','GET'])
-  @cross_origin(headers=['Content-Type']) # Send Access-Control-Allow-Headers
+  @cross_origin() 
   def addquestion():
-    print(request.get_json())
     question=request.get_json()['question']
     answer=request.get_json()['answer']
     difficulty=request.get_json()['difficulty']
     category=request.get_json()['category']
-    # else:
-    #   abort(422)
+  
     try:
       newquestion= Question(question =question ,answer =answer,category =category ,difficulty =difficulty )
       newquestion.insert()
@@ -135,7 +131,6 @@ def create_app(test_config=None):
     searchterm=request.get_json()['searchTerm']
     data =Question.query.filter(Question.question.ilike(f'%{searchterm}%')).all()
     form_cate=[d.format() for d in data]
-    # ضيفي هنا الكاتيجوري الحالي 
     return  jsonify({"questions":form_cate,
                      "totalQuestions":len(form_cate),
                      "currentCategory":1
@@ -176,14 +171,18 @@ def create_app(test_config=None):
   @app.route('/quizzes',methods=['POST','GET'])
   @cross_origin()
   def palyquiz():
+    prev_ques=[]
     prev_ques=request.get_json()['previous_questions']
-    category_id=request.get_json()['quiz_category']
-    categoryQues =Question.query.filter(Question.category==str(category_id)).all()
+    category_id=request.get_json()['quiz_category']['id']
+    if (category_id==0):
+     categoryQues =Question.query.all()
+    else:      
+     categoryQues =Question.query.filter(Question.category==str(category_id)).all()
     for b in categoryQues:
       if (b.id not in prev_ques ):
         prev_ques.append(b.id)
         return  jsonify({
-        "currentQuestion":b.format()
+        "question":b.format()
         ,"previousQuestions":prev_ques
          })
     
@@ -220,7 +219,21 @@ def create_app(test_config=None):
         "success": False, 
         "error": 405,
         "message": "The method specified in the request is not allowed."
-        }), 405   
+        }), 405  
+  @app.errorhandler(500)
+  def MethodNotAllowed(error):
+    return jsonify({
+        "success": False, 
+        "error": 500,
+        "message": "Internal Server Error."
+        }), 500  
+  @app.errorhandler(400)
+  def MethodNotAllowed(error):
+    return jsonify({
+        "success": False, 
+        "error": 400,
+        "message": "Bad Request."
+        }), 400     
   return app
 
     

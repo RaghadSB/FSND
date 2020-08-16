@@ -144,9 +144,17 @@ Display questions based on the given category
 
 POST '/quizzes'
  To start playing a quiz by choosing a category or all the categories  and it will return a random question from a given category
- -Request Arguments:previous_questions list that has all the previous question to prevent repeating the question,quiz_category the id of the selected category to give question-based on the category
+ -Request Arguments:previous_questions list that has all the previous question to prevent repeating the question,quiz_category the id and typ of the selected category to give question-based on the category
+ {
+	"previous_questions": [1,2],
+	"quiz_category": {
+		"type": "Geography",
+		"id": "3"
+	}
+}
+if the user choose ALL the categories then the id will be = 0
  -Returns: JSON that contains currentquestion is a single random question on the format of 
- "currentQuestion": {
+ "question": {
     "answer": "tset",
     "category": "3",
     "difficulty": 4,
@@ -175,6 +183,8 @@ Error Handling
  -422 :Unprocessable
  -403 :Forbidden
  -405 :Method Not Allowed
+ -400 Bad Request 
+ -500 Internal Server Error
 
 ## Testing
 To run the tests, run
