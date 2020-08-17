@@ -72,7 +72,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'],False)
         self.assertEqual(data['message'],'The server can not find the requested page.')
     def test_post_question(self):    
-        res=self.client().post('/postquestion',json=self.newquestion)
+        res=self.client().post('/newquestion',json=self.newquestion)
         data=json.loads(res.data) 
         self.assertEqual(res.status_code,200)
         self.assertTrue(data['questions'])  

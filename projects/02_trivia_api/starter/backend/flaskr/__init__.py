@@ -4,6 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS ,cross_origin
 import random
 import json
+import random
+
 
 from models import setup_db, Question, Category
 
@@ -40,8 +42,13 @@ def create_app(test_config=None):
   @cross_origin()
   def showcategory():
     data =Category.query.all()
-    form_cate={d.id :d.type for d in data}
-    return  jsonify({"categories":form_cate})
+    #  create dict object to format the required  data structure in the frontend 
+    formatted_categoris={}
+    for da in data:
+      formatted_categoris.update({da.id:da.type})
+    # the udacity's instructor way to format the dict 
+    # form_cate={d.id :d.type for d in data}
+    return  jsonify({"categories":formatted_categoris})
   '''
   @TODO: 
   Create an endpoint to handle GET requests for questions, 
@@ -58,16 +65,19 @@ def create_app(test_config=None):
   def showquestion():
     data =Question.query.all()
     categories=Category.query.all()
-    page = request.args.get('page', 1, type=int)
-    start=(page-1)*QUESTIONS_PER_PAGE
-    end =start + QUESTIONS_PER_PAGE
+    # format questions in a list as expected in the frontend 
+    formatted_questions=[]
+    for da in data:
+      formatted_questions.append({"question":da.question,"answer":da.answer,"category":da.category,"difficulty":da.difficulty})
+    pagenum = request.args.get('page', 1, type=int)
+    Start=(pagenum-1)*QUESTIONS_PER_PAGE
+    End =Start + QUESTIONS_PER_PAGE
     form_cate={a.id:a.type for a in categories}
-    form_ques=[d.format() for d in data]
-    if (len(form_ques[start:end])==0):
+    if (len(formatted_questions[Start:End])==0):
       abort(404)
     return  jsonify({
-        'questions':form_ques[start:end]
-        ,'totalQuestions':len(form_ques),
+        'questions':formatted_questions[Start:End]
+        ,'totalQuestions':len(formatted_questions),
         "categories":form_cate
           ,"currentCategory":1
     })
@@ -99,20 +109,22 @@ def create_app(test_config=None):
   of the questions list in the "List" tab.  
   
   '''
-  @app.route('/postquestion',methods=['POST','GET'])
+  @app.route('/newquestion',methods=['POST','GET'])
   @cross_origin() 
   def addquestion():
     question=request.get_json()['question']
     answer=request.get_json()['answer']
     difficulty=request.get_json()['difficulty']
     category=request.get_json()['category']
-  
+    formatted_questions=[]
+
     try:
       newquestion= Question(question =question ,answer =answer,category =category ,difficulty =difficulty )
       newquestion.insert()
       allquestions=Question.query.order_by(Question.id).all()
-      form_ques=[d.format() for d in allquestions]
-      return  jsonify({"questions":form_ques,"success":True}) 
+      for da in allquestions:
+        formatted_questions.append({"question":da.question,"answer":da.answer,"category":da.category,"difficulty":da.difficulty})
+      return  jsonify({"questions":formatted_questions,"success":True}) 
     except:
       abort(422)
    
@@ -129,12 +141,20 @@ def create_app(test_config=None):
   @cross_origin()
   def searchquestion():
     searchterm=request.get_json()['searchTerm']
-    data =Question.query.filter(Question.question.ilike(f'%{searchterm}%')).all()
-    form_cate=[d.format() for d in data]
-    return  jsonify({"questions":form_cate,
-                     "totalQuestions":len(form_cate),
+    formatted_questions=[]
+
+    # I used ilike to make the search case insensitive 
+    try: 
+      data =Question.query.filter(Question.question.ilike(f'%{searchterm}%')).all()
+      for da in data:
+        formatted_questions.append({"question":da.question,"answer":da.answer,"category":da.category,"difficulty":da.difficulty})
+      return  jsonify({"questions":formatted_questions,
+                     "totalQuestions":len(formatted_questions),
                      "currentCategory":1
                      })
+    except:
+      abort(404)
+        
   '''
   @TODO: 
   Create a GET endpoint to get questions based on category. 
@@ -145,16 +165,19 @@ def create_app(test_config=None):
   @app.route('/categories/<int:category_id>/questions',methods=['GET'])
   @cross_origin()
   def showquestionBycategory(category_id):
+    # stringify the category id because it's a string  in the questions table in the database 
      data =Question.query.filter(Question.category == str(category_id)).all()
-     page = request.args.get('page', 1, type=int)
-     start=(page-1)*QUESTIONS_PER_PAGE
-     end =start + QUESTIONS_PER_PAGE
-     form_ques=[d.format() for d in data]
-     if (len(form_ques[start:end])==0):
+     formatted_questions=[]
+     pagenum = request.args.get('page', 1, type=int)
+     Start=(pagenum-1)*10
+     End =Start + 10
+     for da in data:
+        formatted_questions.append({"question":da.question,"answer":da.answer,"category":da.category,"difficulty":da.difficulty})
+     if (len(formatted_questions[Start:End])==0):
       abort(404)
      return  jsonify({
-        "questions":form_ques[start:end]
-        ,"totalQuestions":len(form_ques),
+        "questions":formatted_questions[Start:End]
+        ,"totalQuestions":len(formatted_questions),
         "currentCategory":category_id
      })
 
@@ -171,15 +194,42 @@ def create_app(test_config=None):
   @app.route('/quizzes',methods=['POST','GET'])
   @cross_origin()
   def palyquiz():
+  
     prev_ques=[]
+    allcategory_questions=[]
     prev_ques=request.get_json()['previous_questions']
     category_id=request.get_json()['quiz_category']['id']
     if (category_id==0):
      categoryQues =Question.query.all()
     else:      
      categoryQues =Question.query.filter(Question.category==str(category_id)).all()
+    #  this one way to generate a random question, first I added all the questions' id in a given category in a list
+    #  then selected one randomly  from the questions list 
+    # check if the id it's in a previous question list
+    # if not then add this id to the previous questions list 
+    # find the question that has this selected id and send the question
+    # -----------------------------------------------------------------------------
+    # for da in categoryQues:
+    #   allcategory_questions.append(da.id)
+    
+    # for b in categoryQues:
+    #   random_question=random.choice(allcategory_questions)
+    #   if(random_question not in prev_ques): 
+    #     prev_ques.append(random_question)
+    #     for da in categoryQues:
+    #      if(da.id==random_question):
+    #       return  jsonify({
+    #       "question":da.format()
+    #      ,"previousQuestions":prev_ques
+    #      })
+    # -----------------------------------------------------------------------------
+     # this way display the questions as the same order in the database  
+     # add the id in the list to prevent the repetition of questions
+     #here I did not generate random because I can't give range to generate random numbers, in questions table you may find that 34,2,67,35,76 questions' id in the
+     # same category therefore the question will be displayed in their order in the database 
+     # and then format the question as expected in the frontend 
     for b in categoryQues:
-      if (b.id not in prev_ques ):
+      if (b.id not in prev_ques):
         prev_ques.append(b.id)
         return  jsonify({
         "question":b.format()
