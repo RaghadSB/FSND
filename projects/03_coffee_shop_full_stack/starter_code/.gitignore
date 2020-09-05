@@ -1,6 +1,8 @@
 venv/
 .vscode/
 __pycache__/
+frontend/node_modules
+backend/proenv
 test.db
 
 # OS generated files #
